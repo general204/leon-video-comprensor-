@@ -1,0 +1,6 @@
+{
+  "appId": "com.leonedits.compresor",
+  "appName": "Leon Edits",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}

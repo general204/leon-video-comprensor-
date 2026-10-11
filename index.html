@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leon Edits | Compresor de video</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F5F6F8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F6F8;
+  --surface:#FFFFFF;
+  --ink:#16191F;
+  --muted:#6A7080;
+  --line:#E2E5EB;
+  --accent:#2C47F5;
+  --accent-soft:#E8EBFE;
+  --ghost:#D5D9E1;
+  --danger:#B42318;
+  --danger-soft:#FDECEA;
+  --on-ink:#FFFFFF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D0E11;--surface:#16181D;--ink:#ECEEF3;--muted:#8E94A3;--line:#262A32;
+    --accent:#8497FF;--accent-soft:#1E2340;--ghost:#2E333C;--danger:#FF8A80;--danger-soft:#2B1816;--on-ink:#0D0E11;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D0E11;--surface:#16181D;--ink:#ECEEF3;--muted:#8E94A3;--line:#262A32;
+  --accent:#8497FF;--accent-soft:#1E2340;--ghost:#2E333C;--danger:#FF8A80;--danger-soft:#2B1816;--on-ink:#0D0E11;
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+#root{min-height:100%;display:flex;flex-direction:column}
+.app{width:100%;max-width:460px;margin:0 auto;padding:20px 20px 28px;flex:1;display:flex;flex-direction:column}
+.num{font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;padding:4px 0 28px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.01em}
+.mark{width:32px;height:32px;border-radius:10px;background:var(--ink);color:var(--on-ink);display:grid;place-items:center}
+.top small{color:var(--muted);font-size:13px}
+
+/* hero */
+h1{font-size:32px;line-height:1.1;letter-spacing:-.03em;font-weight:600;margin:8px 0 12px;max-width:14em}
+.lead{color:var(--muted);margin:0 0 28px;max-width:30em}
+.pick{
+  display:flex;flex-direction:column;align-items:flex-start;gap:36px;
+  background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;
+  cursor:pointer;transition:border-color .15s;
+}
+.pick:hover{border-color:var(--ghost)}
+.pick:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.pick input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.pick .ic{width:44px;height:44px;border-radius:14px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.pick strong{display:block;font-size:19px;font-weight:600;letter-spacing:-.01em}
+.pick span{color:var(--muted);font-size:14px}
+.loading{color:var(--muted);font-size:14px;margin-top:14px}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px}
+.preview{border-radius:12px;overflow:hidden;background:#000;display:flex;justify-content:center}
+.preview video{display:block;width:100%;max-height:300px;background:#000}
+.file{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font-size:14px}
+.file b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.file span{color:var(--muted);white-space:nowrap}
+.meta{color:var(--muted);font-size:13px;margin-top:2px}
+
+.label{font-size:13px;font-weight:600;margin:0 0 10px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);border-radius:14px;padding:4px}
+.seg button{border:0;background:transparent;padding:10px 4px;border-radius:10px;font-size:14px;font-weight:500;color:var(--muted);transition:background .15s,color .15s}
+.seg button[aria-checked="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.hint{color:var(--muted);font-size:14px;margin:12px 0 0;min-height:42px}
+
+.est{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.est .big{font-size:26px;font-weight:600;letter-spacing:-.02em}
+.est .tag{font-size:14px;font-weight:600;color:var(--accent)}
+.est small{display:block;color:var(--muted);font-size:13px}
+
+details{margin:0 0 12px}
+summary{list-style:none;cursor:pointer;padding:12px 4px;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:space-between;color:var(--muted)}
+summary::-webkit-details-marker{display:none}
+summary svg{transition:transform .2s}
+details[open] summary svg{transform:rotate(180deg)}
+.adv{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:grid;gap:18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;font-size:14px;color:var(--muted)}
+.chip[aria-checked="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.chip:disabled{opacity:.4;cursor:not-allowed}
+
+.btn{width:100%;border:0;border-radius:16px;padding:16px;font-size:16px;font-weight:600;background:var(--ink);color:var(--on-ink);transition:opacity .15s}
+.btn:hover{opacity:.9}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn + .btn{margin-top:10px}
+.text-btn{border:0;background:transparent;color:var(--muted);font-size:14px;padding:12px;width:100%}
+.note{color:var(--muted);font-size:13px;text-align:center;margin:12px 0 0}
+
+/* progress */
+.prog-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.prog-top .big{font-size:40px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.prog-top span{color:var(--muted);font-size:14px}
+.track{height:6px;border-radius:6px;background:var(--bg);overflow:hidden}
+.track i{display:block;height:100%;border-radius:6px;background:var(--accent);transition:width .25s linear}
+
+/* result */
+.saved{font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.1;margin:4px 0 6px}
+.cmp{margin-top:20px;display:grid;gap:14px}
+.cmp .row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+.cmp .row span:first-child{color:var(--muted)}
+.cmp .row span:last-child{font-weight:600}
+.bar{height:10px;border-radius:6px;background:var(--bg)}
+.bar i{display:block;height:100%;border-radius:6px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.b0{background:var(--ghost)}
+.b1{background:var(--accent)}
+
+.alert{background:var(--danger-soft);color:var(--danger);border-radius:14px;padding:12px 14px;font-size:14px;margin-bottom:12px}
+.warn{background:var(--accent-soft);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:14px;margin-top:14px}
+
+footer{margin-top:auto;padding-top:32px;text-align:center;color:var(--muted);font-size:12.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+<script src="vendor/htm.umd.js"></script>
+<script>
+(function(){
+const {useState,useRef,useEffect,useMemo}=React;
+const html=htm.bind(React.createElement);
+
+/* ---------- utilidades ---------- */
+const fmtSize=b=>{
+  if(b>=1e9) return (b/1e9).toLocaleString('es',{maximumFractionDigits:2})+' GB';
+  if(b>=1e6) return (b/1e6).toLocaleString('es',{maximumFractionDigits:1})+' MB';
+  return Math.max(1,Math.round(b/1e3))+' KB';
+};
+const fmtTime=s=>{
+  s=Math.max(0,Math.round(s));
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;
+  return h?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${m}:${String(ss).padStart(2,'0')}`;
+};
+
+/* ---------- ajustes de compresión ---------- */
+const PRESETS={
+  calidad:{label:'Calidad',bpp:{vp9:.09,h264:.13},abr:128e3,
+    desc:'Mantiene la resolución y un bitrate alto. La diferencia no se nota a simple vista.'},
+  equilibrado:{label:'Equilibrado',bpp:{vp9:.055,h264:.08},abr:96e3,
+    desc:'El mejor balance entre peso y nitidez para la mayoría de videos.'},
+  maxima:{label:'Máxima',bpp:{vp9:.03,h264:.045},abr:64e3,
+    desc:'El menor peso posible. Puede notarse en escenas con mucho movimiento.'}
+};
+const MIMES={
+  mp4:['video/mp4;codecs=avc1.640028,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4'],
+  webm:['video/webm;codecs=vp9,opus','video/webm;codecs=av1,opus','video/webm;codecs=vp8,opus','video/webm']
+};
+const HAS_MR=typeof MediaRecorder!=='undefined'&&typeof HTMLCanvasElement!=='undefined'&&typeof HTMLCanvasElement.prototype.captureStream==='function';
+const supports=k=>HAS_MR&&MIMES[k].some(m=>{try{return MediaRecorder.isTypeSupported(m)}catch(e){return false}});
+const SUP={mp4:supports('mp4'),webm:supports('webm')};
+
+function pickMime(format){
+  const order=format==='mp4'?['mp4','webm']:['webm','mp4'];
+  for(const f of order){
+    for(const m of MIMES[f]){
+      try{
+        if(MediaRecorder.isTypeSupported(m)){
+          return {mime:m,fmt:f,ext:f,codec:(m.includes('vp9')||m.includes('av1'))?'vp9':'h264'};
+        }
+      }catch(e){}
+    }
+  }
+  return null;
+}
+
+function dims(meta,res){
+  let w=meta.width,h=meta.height;
+  const short=Math.min(w,h);
+  if(res&&short>res){const s=res/short;w*=s;h*=s;}
+  w=Math.max(2,Math.round(w/2)*2);h=Math.max(2,Math.round(h/2)*2);
+  return {w,h};
+}
+
+function plan(meta,file,o){
+  const {w,h}=dims(meta,o.res);
+  const p=PRESETS[o.preset];
+  const mt=pickMime(o.format);
+  if(!mt) return null;
+  const fps=o.fps||30;
+  let vbr=w*h*fps*p.bpp[mt.codec];
+  const orig=(file.size*8)/Math.max(meta.duration,0.1);
+  vbr=Math.max(150e3,Math.min(vbr,orig*0.85));
+  const abr=p.abr;
+  return {w,h,fps:o.fps,vbr,abr,...mt,estimate:((vbr+abr)*meta.duration)/8};
+}
+
+/* ---------- motor de compresión (canvas + MediaRecorder) ---------- */
+function runCompress(v,pl,onProgress,ctl){
+  return new Promise((resolve,reject)=>{
+    const cv=document.createElement('canvas');
+    cv.width=pl.w;cv.height=pl.h;
+    const g=cv.getContext('2d',{alpha:false});
+    g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+
+    if(!v._ac){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      v._ac=new AC();
+      v._node=v._ac.createMediaElementSource(v);
+    }
+    const ac=v._ac;
+    try{ac.resume()}catch(e){}
+    const dest=ac.createMediaStreamDestination();
+    v._node.connect(dest);
+
+    const vs=pl.fps?cv.captureStream(pl.fps):cv.captureStream();
+    const stream=new MediaStream([...vs.getVideoTracks(),...dest.stream.getAudioTracks()]);
+    let rec;
+    try{
+      rec=new MediaRecorder(stream,{mimeType:pl.mime,videoBitsPerSecond:Math.round(pl.vbr),audioBitsPerSecond:pl.abr});
+    }catch(e){
+      try{v._node.disconnect(dest)}catch(_){}
+      return reject(new Error('Este navegador no pudo iniciar la grabación con esos ajustes.'));
+    }
+
+    const chunks=[];
+    let stopped=false,cancelled=false,wl=null;
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+
+    const draw=()=>{
+      if(stopped)return;
+      try{g.drawImage(v,0,0,pl.w,pl.h)}catch(e){}
+      if(v.duration)onProgress(Math.min(1,v.currentTime/v.duration));
+      schedule();
+    };
+    const schedule=()=>{
+      if('requestVideoFrameCallback' in v) v.requestVideoFrameCallback(draw);
+      else requestAnimationFrame(draw);
+    };
+
+    const vis=()=>{
+      if(document.hidden){
+        if(rec.state==='recording'){try{rec.pause();v.pause()}catch(e){}}
+      }else if(rec.state==='paused'){
+        v.play().then(()=>{try{rec.resume()}catch(e){}}).catch(()=>{});
+      }
+    };
+    document.addEventListener('visibilitychange',vis);
+
+    const cleanup=()=>{
+      stopped=true;
+      document.removeEventListener('visibilitychange',vis);
+      v.onended=null;v.onerror=null;
+      try{v.pause()}catch(e){}
+      try{v._node.disconnect(dest)}catch(e){}
+      stream.getTracks().forEach(t=>{try{t.stop()}catch(e){}});
+      if(wl){try{wl.release()}catch(e){}}
+    };
+
+    rec.onstop=()=>{
+      cleanup();
+      if(cancelled)return reject(new Error('cancelado'));
+      const blob=new Blob(chunks,{type:pl.mime.split(';')[0]});
+      if(!blob.size)return reject(new Error('No se generó ningún dato de video.'));
+      resolve(blob);
+    };
+    rec.onerror=()=>{cleanup();reject(new Error('Falló la grabación del video.'))};
+
+    ctl.cancel=()=>{
+      cancelled=true;
+      if(rec.state!=='inactive'){try{rec.stop()}catch(e){}}else{cleanup();reject(new Error('cancelado'))}
+    };
+
+    v.onended=()=>{
+      try{g.drawImage(v,0,0,pl.w,pl.h)}catch(e){}
+      onProgress(1);
+      setTimeout(()=>{if(rec.state!=='inactive')rec.stop()},250);
+    };
+    v.onerror=()=>{cleanup();reject(new Error('No se pudo reproducir el video para procesarlo.'))};
+
+    try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>{wl=l}).catch(()=>{})}catch(e){}
+
+    // todo lo anterior es síncrono: play() ocurre dentro del gesto del usuario
+    v.muted=false;v.volume=1;v.playbackRate=1;
+    if(v.currentTime>0.01)v.currentTime=0;
+    draw();
+    rec.start(1000);
+    const pr=v.play();
+    if(pr&&pr.catch)pr.catch(()=>{
+      cancelled=true;
+      if(rec.state!=='inactive'){try{rec.stop()}catch(e){}}
+      reject(new Error('El navegador bloqueó la reproducción. Vuelve a tocar Comprimir.'));
+    });
+  });
+}
+
+/* ---------- componentes ---------- */
+const Icon={
+  chev:html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>`,
+  logo:html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7l5 5-5 5"/><path d="M20 7l-5 5 5 5"/></svg>`,
+  video:html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3"/></svg>`
+};
+
+function Chips({label,value,options,onChange}){
+  return html`<div>
+    <p className="label">${label}</p>
+    <div className="chips" role="radiogroup" aria-label=${label}>
+      ${options.map(o=>html`<button key=${o.v} type="button" role="radio" className="chip"
+        aria-checked=${value===o.v} disabled=${!!o.disabled} onClick=${()=>onChange(o.v)}>${o.l}</button>`)}
+    </div>
+  </div>`;
+}
+
+function App(){
+  const [file,setFile]=useState(null);
+  const [meta,setMeta]=useState(null);
+  const [srcUrl,setSrcUrl]=useState(null);
+  const [preset,setPreset]=useState('equilibrado');
+  const [res,setRes]=useState(0);
+  const [fps,setFps]=useState(0);
+  const [format,setFormat]=useState(SUP.mp4?'mp4':'webm');
+  const [phase,setPhase]=useState('idle');
+  const [progress,setProgress]=useState(0);
+  const [result,setResult]=useState(null);
+  const [error,setError]=useState('');
+  const [loading,setLoading]=useState(false);
+  const [,tick]=useState(0);
+  const vref=useRef(null);
+  const ctl=useRef({});
+  const t0=useRef(0);
+  const dl=useRef(null);
+
+  useEffect(()=>{
+    try{
+      if(window.claude&&window.claude.use){
+        window.claude.use('downloads').then(d=>{dl.current=d}).catch(()=>{});
+      }
+    }catch(e){}
+  },[]);
+
+  useEffect(()=>{
+    if(phase!=='working')return;
+    const id=setInterval(()=>tick(n=>n+1),1000);
+    return ()=>clearInterval(id);
+  },[phase]);
+
+  function reset(){
+    if(srcUrl)URL.revokeObjectURL(srcUrl);
+    if(result&&result.url)URL.revokeObjectURL(result.url);
+    vref.current=null;
+    setFile(null);setMeta(null);setSrcUrl(null);setResult(null);setError('');setProgress(0);setPhase('idle');
+  }
+
+  function onPick(e){
+    const f=e.target.files&&e.target.files[0];
+    e.target.value='';
+    if(!f)return;
+    if(f.type&&!f.type.startsWith('video/')){setError('Elige un archivo de video.');return;}
+    setError('');setLoading(true);
+    const url=URL.createObjectURL(f);
+    const v=document.createElement('video');
+    v.preload='auto';v.playsInline=true;v.setAttribute('playsinline','');
+    v.src=url;
+    const fail=()=>{
+      setLoading(false);URL.revokeObjectURL(url);
+      setError('No se pudo leer este video. Prueba con un archivo MP4 o MOV.');
+    };
+    v.onerror=fail;
+    v.onloadedmetadata=()=>{
+      if(!isFinite(v.duration)||!v.videoWidth){fail();return;}
+      vref.current=v;
+      if(srcUrl)URL.revokeObjectURL(srcUrl);
+      setMeta({width:v.videoWidth,height:v.videoHeight,duration:v.duration});
+      setFile(f);setSrcUrl(url);setResult(null);setProgress(0);
+      setLoading(false);setPhase('ready');
+    };
+  }
+
+  const pl=useMemo(()=>meta&&file?plan(meta,file,{preset,res,fps,format}):null,[meta,file,preset,res,fps,format]);
+
+  function start(){
+    if(!pl||!vref.current)return;
+    setError('');setProgress(0);setPhase('working');
+    t0.current=Date.now();
+    runCompress(vref.current,pl,p=>setProgress(p),ctl.current)
+      .then(blob=>{
+        const url=URL.createObjectURL(blob);
+        setResult({blob,url,size:blob.size,ext:pl.ext,w:pl.w,h:pl.h});
+        setPhase('done');
+      })
+      .catch(err=>{
+        if(err&&err.message==='cancelado'){setPhase('ready');return;}
+        setError((err&&err.message)||'Ocurrió un error al comprimir.');
+        setPhase('ready');
+      });
+  }
+
+  function cancel(){ctl.current.cancel&&ctl.current.cancel();}
+
+  const outName=()=>(file?file.name.replace(/\.[^.]+$/,''):'video')+'-leon-edits.'+(result?result.ext:'mp4');
+
+  async function nativeSave(blob,name){
+    const {Filesystem,Share}=window.Capacitor.Plugins;
+    const CH=3*1024*1024;
+    let first=true;
+    for(let o=0;o<blob.size;o+=CH){
+      const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob.slice(o,o+CH));});
+      if(first){await Filesystem.writeFile({path:name,data:b64,directory:'CACHE'});first=false;}
+      else{await Filesystem.appendFile({path:name,data:b64,directory:'CACHE'});}
+    }
+    const {uri}=await Filesystem.getUri({path:name,directory:'CACHE'});
+    await Share.share({title:name,url:uri,dialogTitle:'Guardar o compartir video'});
+  }
+
+  async function save(){
+    if(!result)return;
+    const name=outName();
+    const cap=window.Capacitor;
+    if(cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins&&cap.Plugins.Filesystem&&cap.Plugins.Share){
+      try{await nativeSave(result.blob,name);}catch(e){setError('No se pudo guardar el video.');}
+      return;
+    }
+    try{
+      if(dl.current){await dl.current.save({filename:name,data:result.blob});return;}
+    }catch(e){
+      if(e&&(e.code==='declined'||e.code==='rate_limited'))return;
+    }
+    const a=document.createElement('a');
+    a.href=result.url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  }
+
+  const canShare=useMemo(()=>{
+    if(!result)return false;
+    try{
+      return !!(navigator.canShare&&navigator.canShare({files:[new File([result.blob],'v.'+result.ext,{type:result.blob.type})]}));
+    }catch(e){return false}
+  },[result]);
+
+  async function share(){
+    try{
+      const f=new File([result.blob],outName(),{type:result.blob.type});
+      await navigator.share({files:[f]});
+    }catch(e){}
+  }
+
+  /* ---------- vistas ---------- */
+  const header=html`<header className="top">
+    <div className="brand"><span className="mark">${Icon.logo}</span><span>Leon Edits</span></div>
+    <small>Compresor de video</small>
+  </header>`;
+  const footer=html`<footer>© ${new Date().getFullYear()} Leon Edits. Todos los derechos reservados.</footer>`;
+
+  let body;
+
+  if(!HAS_MR){
+    body=html`<div className="alert">Este navegador no permite comprimir video. Abre la app en Chrome, Edge o Safari actualizados.</div>`;
+  }else if(phase==='idle'){
+    body=html`<div>
+      <h1>Videos más ligeros, misma imagen.</h1>
+      <p className="lead">Comprime y optimiza tus videos desde el teléfono. El proceso ocurre en tu dispositivo y nada se sube a internet.</p>
+      ${error&&html`<div className="alert" role="alert">${error}</div>`}
+      <label className="pick">
+        <input type="file" accept="video/*" onChange=${onPick}/>
+        <span className="ic">${Icon.video}</span>
+        <div>
+          <strong>Elegir video</strong>
+          <span>MP4, MOV, WebM</span>
+        </div>
+      </label>
+      ${loading&&html`<p className="loading">Leyendo video…</p>`}
+    </div>`;
+  }else if(phase==='ready'&&file&&meta&&pl){
+    const delta=Math.round((1-pl.estimate/file.size)*100);
+    body=html`<div>
+      ${error&&html`<div className="alert" role="alert">${error}</div>`}
+      <div className="card">
+        <div className="preview"><video src=${srcUrl} controls playsInline muted preload="metadata"></video></div>
+        <div className="file"><b>${file.name}</b><span className="num">${fmtSize(file.size)}</span></div>
+        <div className="meta num">${meta.width}×${meta.height} · ${fmtTime(meta.duration)}</div>
+      </div>
+
+      <div className="card">
+        <p className="label">Nivel de compresión</p>
+        <div className="seg" role="radiogroup" aria-label="Nivel de compresión">
+          ${Object.keys(PRESETS).map(k=>html`<button key=${k} type="button" role="radio"
+            aria-checked=${preset===k} onClick=${()=>setPreset(k)}>${PRESETS[k].label}</button>`)}
+        </div>
+        <p className="hint">${PRESETS[preset].desc}</p>
+      </div>
+
+      <div className="card est">
+        <div>
+          <small>Tamaño estimado</small>
+          <span className="big num">${fmtSize(pl.estimate)}</span>
+        </div>
+        <span className="tag num">${delta>0?`−${delta} %`:'sin ahorro'}</span>
+      </div>
+
+      <details>
+        <summary>Ajustes avanzados ${Icon.chev}</summary>
+        <div className="adv">
+          <${Chips} label="Resolución" value=${res} onChange=${setRes}
+            options=${[{v:0,l:'Original'},{v:1080,l:'1080p'},{v:720,l:'720p'},{v:480,l:'480p'}]}/>
+          <${Chips} label="Fotogramas por segundo" value=${fps} onChange=${setFps}
+            options=${[{v:0,l:'Original'},{v:30,l:'30'},{v:24,l:'24'}]}/>
+          <${Chips} label="Formato" value=${pl.fmt} onChange=${setFormat}
+            options=${[{v:'mp4',l:'MP4 (compatible)',disabled:!SUP.mp4},{v:'webm',l:'WebM (más pequeño)',disabled:!SUP.webm}]}/>
+        </div>
+      </details>
+
+      <button className="btn" onClick=${start}>Comprimir video</button>
+      <button className="text-btn" onClick=${reset}>Cambiar video</button>
+      <p className="note">Se procesa en tiempo real: tardará cerca de ${fmtTime(meta.duration)}.</p>
+    </div>`;
+  }else if(phase==='working'&&meta){
+    const pct=Math.round(progress*100);
+    const el=(Date.now()-t0.current)/1000;
+    const rem=progress>0.03?(el/progress)*(1-progress):null;
+    body=html`<div>
+      <div className="card">
+        <div className="prog-top">
+          <span className="big num">${pct} %</span>
+          <span className="num">${rem!==null?`Faltan ${fmtTime(rem)}`:'Iniciando…'}</span>
+        </div>
+        <div className="track" role="progressbar" aria-valuenow=${pct} aria-valuemin="0" aria-valuemax="100"><i style=${{width:pct+'%'}}></i></div>
+        <p className="hint" style=${{minHeight:0}}>Comprimiendo ${file.name}. Mantén esta pantalla abierta; si cambias de app, el proceso se pausa y sigue al volver.</p>
+      </div>
+      <button className="btn sec" onClick=${cancel}>Cancelar</button>
+    </div>`;
+  }else if(phase==='done'&&result&&file){
+    const saved=file.size-result.size;
+    const pct=Math.round((saved/file.size)*100);
+    const w1=Math.max(3,Math.min(100,(result.size/file.size)*100));
+    body=html`<div>
+      <div className="card">
+        <p className="saved num">${saved>0?`Ahorraste ${fmtSize(saved)}`:'El resultado pesa más'}</p>
+        <div className="meta">${saved>0?`El video pesa ${pct} % menos.`:'El original ya estaba muy optimizado.'}</div>
+        <div className="cmp">
+          <div>
+            <div className="row"><span>Original</span><span className="num">${fmtSize(file.size)}</span></div>
+            <div className="bar"><i className="b0" style=${{width:'100%'}}></i></div>
+          </div>
+          <div>
+            <div className="row"><span>Comprimido</span><span className="num">${fmtSize(result.size)}</span></div>
+            <div className="bar"><i className="b1" style=${{width:w1+'%'}}></i></div>
+          </div>
+        </div>
+        ${saved<=0&&html`<div className="warn">Prueba con el nivel Máxima o baja la resolución en Ajustes avanzados.</div>`}
+      </div>
+      <div className="card">
+        <div className="preview"><video src=${result.url} controls playsInline preload="metadata"></video></div>
+        <div className="meta num" style=${{marginTop:12}}>${result.w}×${result.h} · ${result.ext.toUpperCase()}</div>
+      </div>
+      <button className="btn" onClick=${save}>Guardar video</button>
+      ${canShare&&html`<button className="btn sec" onClick=${share}>Compartir</button>`}
+      <button className="text-btn" onClick=${()=>{if(result.url)URL.revokeObjectURL(result.url);setResult(null);setPhase('ready')}}>Ajustar y comprimir de nuevo</button>
+      <button className="text-btn" onClick=${reset}>Elegir otro video</button>
+    </div>`;
+  }else{
+    body=null;
+  }
+
+  return html`<div className="app">${header}<main>${body}</main>${footer}</div>`;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+})();
+</script>
+</body>
+</html>
