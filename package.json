@@ -1,0 +1,16 @@
+{
+  "name": "leon-edits-compresor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compresor de video por Leon Edits",
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/share": "^7.0.0",
+    "htm": "3.1.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}
